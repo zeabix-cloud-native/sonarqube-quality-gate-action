@@ -46,7 +46,7 @@ set_multiline_output () {
   else
     # For older runners, escape newlines
     local escaped_value
-    escaped_value=$(echo "${value}" | sed ':a;N;$!ba;s/\n/\\n/g')
+    escaped_value=$(printf '%s' "${value}" | jq -Rs .)
     echo "::set-output name=${name}::${escaped_value}"
   fi
 }
