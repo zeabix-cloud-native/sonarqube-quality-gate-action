@@ -187,33 +187,43 @@ generate_quality_gate_summary() {
     url_params="${url_params}&branch=${branch}"
   fi
   
-  # Generate summary content
+  # Generate summary content with proper newline escaping for GitHub Actions
   local summary=""
-  summary="${summary}${status_text}\n"
-  summary="${summary}Issues\n"
-  summary="${summary} [${new_issues_count} New issues](${serverUrl}/project/issues?${url_params}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true)\n"
-  summary="${summary} [${accepted_issues_count} Accepted issues](${serverUrl}/project/issues?${url_params}&issueStatuses=ACCEPTED)\n"
-  summary="${summary}\n"
-  summary="${summary}Measures\n"
-  summary="${summary} [${security_hotspots_count} Security Hotspots](${serverUrl}/project/security_hotspots?${url_params}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true)\n"
-  summary="${summary} [${coverage_value}% Coverage on New Code](${serverUrl}/component_measures?${url_params}&metric=new_coverage&view=list)\n"
+  summary="${summary}${status_text}\\n"
+  summary="${summary}Issues\\n"
+  summary="${summary} [${new_issues_count} New issues](${serverUrl}/project/issues?${url_params}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true)\\n"
+  summary="${summary} [${accepted_issues_count} Accepted issues](${serverUrl}/project/issues?${url_params}&issueStatuses=ACCEPTED)\\n"
+  summary="${summary}\\n"
+  summary="${summary}Measures\\n"
+  summary="${summary} [${security_hotspots_count} Security Hotspots](${serverUrl}/project/security_hotspots?${url_params}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true)\\n"
+  summary="${summary} [${coverage_value}% Coverage on New Code](${serverUrl}/component_measures?${url_params}&metric=new_coverage&view=list)\\n"
   summary="${summary} [${duplication_value}% Duplication on New Code](${serverUrl}/component_measures?${url_params}&metric=new_duplicated_lines_density&view=list)"
   
   # Output summary to GitHub Actions output
   set_output "quality-gate-summary" "$summary"
 
+  # For console output, use actual newlines for better readability
+  local console_summary=""
+  console_summary="${console_summary}${status_text}
+"
+  console_summary="${console_summary}Issues
+"
+  console_summary="${console_summary} [${new_issues_count} New issues](${serverUrl}/project/issues?${url_params}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true)
+"
+  console_summary="${console_summary} [${accepted_issues_count} Accepted issues](${serverUrl}/project/issues?${url_params}&issueStatuses=ACCEPTED)
+"
+  console_summary="${console_summary}
+"
+  console_summary="${console_summary}Measures
+"
+  console_summary="${console_summary} [${security_hotspots_count} Security Hotspots](${serverUrl}/project/security_hotspots?${url_params}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true)
+"
+  console_summary="${console_summary} [${coverage_value}% Coverage on New Code](${serverUrl}/component_measures?${url_params}&metric=new_coverage&view=list)
+"
+  console_summary="${console_summary} [${duplication_value}% Duplication on New Code](${serverUrl}/component_measures?${url_params}&metric=new_duplicated_lines_density&view=list)"
+
   # Also echo summary to stdout for console output
-  # echo ""
-  echo "$summary"
-  # echo "$status_text"
-  # echo "Issues"
-  # echo " [${new_issues_count} New issues](${serverUrl}/project/issues?${url_params}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true)"
-  # echo " [${accepted_issues_count} Accepted issues](${serverUrl}/project/issues?${url_params}&issueStatuses=ACCEPTED)"
-  # echo ""
-  # echo "Measures"
-  # echo " [${security_hotspots_count} Security Hotspots](${serverUrl}/project/security_hotspots?${url_params}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true)"
-  # echo " [${coverage_value}% Coverage on New Code](${serverUrl}/component_measures?${url_params}&metric=new_coverage&view=list)"
-  # echo " [${duplication_value}% Duplication on New Code](${serverUrl}/component_measures?${url_params}&metric=new_duplicated_lines_density&view=list)"
+  echo "$console_summary"
 }
 
 if [[ ${qualityGateStatus} == "OK" ]]; then

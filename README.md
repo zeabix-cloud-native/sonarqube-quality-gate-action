@@ -61,6 +61,10 @@ jobs:
       # The possible outputs of the `quality-gate-status` variable are `PASSED`, `WARN` or `FAILED`.
       - name: "Example show SonarQube Quality Gate Status value"
         run: echo "The Quality Gate status is ${{ steps.sonarqube-quality-gate-check.outputs.quality-gate-status }}"
+        
+      # You can also use the detailed summary output for notifications (e.g., Slack, Teams)
+      - name: "Example show SonarQube Quality Gate Summary"
+        run: echo "The Quality Gate summary is ${{ steps.sonarqube-quality-gate-check.outputs.quality-gate-summary }}"
 ```
 
 Make sure to set up `pollingTimeoutSec` property in your step, to avoid wasting action minutes per month (see above example). If not provided, the default value of 300s is applied.
@@ -89,6 +93,33 @@ Example usage:
 - `SONAR_HOST_URL` – **Optional** this tells the scanner where SonarQube is hosted, otherwise it will get the one from the scan report. You can set the `SONAR_HOST_URL` environment variable in the "Secrets" settings page of your repository, or you can add them at the level of your GitHub organization (recommended).
 
 - `SONAR_ROOT_CERT` – Holds an additional root certificate (in PEM format) that is used to validate the SonarQube certificate. You can set the `SONAR_ROOT_CERT` environment variable in the "Secrets" settings page of your repository, or you can add them at the level of your GitHub organization (recommended).
+
+## Outputs
+
+This action provides two outputs that can be used in subsequent steps:
+
+- `quality-gate-status` - The Quality Gate status: `PASSED`, `WARN`, or `FAILED`
+- `quality-gate-summary` - A formatted summary of the Quality Gate results with markdown links, suitable for notifications
+
+### Using the summary output with Slack notifications
+
+The `quality-gate-summary` output contains properly escaped newlines and can be used directly in Slack notifications:
+
+```yaml
+- name: Send Slack notification
+  uses: 8398a7/action-slack@v3
+  with:
+    status: ${{ job.status }}
+    text: ${{ steps.sonarqube-quality-gate-check.outputs.quality-gate-summary }}
+  env:
+    SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+```
+
+The summary includes:
+- Quality Gate status
+- Links to new and accepted issues
+- Links to security hotspots
+- Coverage and duplication metrics for new code
 
 ## Quality Gate check run
 

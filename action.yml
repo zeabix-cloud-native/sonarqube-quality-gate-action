@@ -25,3 +25,7 @@ outputs:
     description: >
       The resulting Quality Gate Status value of PASSED, WARN or FAILED
     value: ${{ steps.quality-gate-check.outputs.quality-gate-status }}
+  quality-gate-summary:
+    description: >
+      A formatted summary of the Quality Gate results including issues, measures, and links to SonarQube
+    value: ${{ steps.quality-gate-check.outputs.quality-gate-summary }}

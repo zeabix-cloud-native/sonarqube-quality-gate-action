@@ -339,7 +339,7 @@ teardown() {
   [[ "${github_outputs[0]}" = "quality-gate-status=PASSED" ]]
   
   # Check quality_gate_summary output exists
-  [[ "${github_outputs[1]}" = quality_gate_summary=* ]]
+  [[ "${github_outputs[1]}" = quality-gate-summary=* ]]
   [[ "${github_outputs[1]}" = *"Quality Gate Passed"* ]]
   [[ "${github_outputs[1]}" = *"[3 New issues]"* ]]
   [[ "${github_outputs[1]}" = *"[1 Accepted issues]"* ]]
