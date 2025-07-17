@@ -32,6 +32,25 @@ set_output () {
   fi
 }
 
+# Handle multiline outputs for GitHub Actions
+set_multiline_output () {
+  local name="$1"
+  local value="$2"
+  
+  if [[ -n "${GITHUB_OUTPUT}" ]]; then
+    # Use heredoc-like syntax for multiline outputs
+    local delimiter="EOF_${name}_$(date +%s)"
+    echo "${name}<<${delimiter}" >> "${GITHUB_OUTPUT}"
+    echo "${value}" >> "${GITHUB_OUTPUT}"
+    echo "${delimiter}" >> "${GITHUB_OUTPUT}"
+  else
+    # For older runners, escape newlines
+    local escaped_value
+    escaped_value=$(echo "${value}" | sed ':a;N;$!ba;s/\n/\\n/g')
+    echo "::set-output name=${name}::${escaped_value}"
+  fi
+}
+
 ## Enable debug mode.
 enable_debug() {
   if [[ "${DEBUG}" == "true" ]]; then
