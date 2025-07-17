@@ -297,3 +297,46 @@ teardown() {
   [[ "$output" = *"::set-output name=quality-gate-status::PASSED"* ]]
   [[ "$output" = *"Quality Gate has PASSED."* ]]
 }
+
+@test "generate quality gate summary when dashboard URL contains project info" {
+  export SONAR_TOKEN="test"
+  echo "serverUrl=https://sonarcloud.io" >> metadata_tmp
+  echo "ceTaskUrl=https://sonarcloud.io/api/ce/task?id=AXlCe3gsFwOUsY8YKHTn" >> metadata_tmp
+  echo "dashboardUrl=https://sonarcloud.io/project/overview?id=test-project&pullRequest=42" >> metadata_tmp
+
+  #mock curl
+  function curl() {
+    local url="${@: -1}"
+    if [[ $url == *"/api/qualitygates/project_status?analysisId"* ]]; then
+      echo '{"projectStatus":{"status":"OK"}}'
+    elif [[ $url == *"/api/issues/search"* && $url == *"sinceLeakPeriod=true"* ]]; then
+      echo '{"total":3}'  # New issues
+    elif [[ $url == *"/api/issues/search"* && $url == *"issueStatuses=ACCEPTED"* ]]; then
+      echo '{"total":1}'  # Accepted issues
+    elif [[ $url == *"/api/hotspots/search"* ]]; then
+      echo '{"paging":{"total":2}}'  # Security hotspots
+    elif [[ $url == *"/api/measures/component"* && $url == *"new_coverage"* ]]; then
+      echo '{"component":{"measures":[{"value":"85.5"}]}}'  # Coverage
+    elif [[ $url == *"/api/measures/component"* && $url == *"new_duplicated_lines_density"* ]]; then
+      echo '{"component":{"measures":[{"value":"1.2"}]}}'  # Duplication
+    else
+      echo '{"task":{"analysisId":"AXlCe3jz9LkwR9Gs0pBY","status":"SUCCESS"}}'
+    fi
+  }
+  export -f curl
+
+  run script/check-quality-gate.sh metadata_tmp 300
+
+  read -r github_out_actual < ${GITHUB_OUTPUT}
+
+  [ "$status" -eq 0 ]
+  [[ "${github_out_actual}" = "quality-gate-status=PASSED" ]]
+  [[ "$output" = *"Quality Gate has PASSED."* ]]
+  [[ "$output" = *"Quality Gate Passed"* ]]
+  [[ "$output" = *"[3 New issues]"* ]]
+  [[ "$output" = *"[1 Accepted issues]"* ]]
+  [[ "$output" = *"[2 Security Hotspots]"* ]]
+  [[ "$output" = *"[85.5% Coverage on New Code]"* ]]
+  [[ "$output" = *"[1.2% Duplication on New Code]"* ]]
+  [[ "$output" = *"pullRequest=42"* ]]
+}
