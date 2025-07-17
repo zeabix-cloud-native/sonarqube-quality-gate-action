@@ -63,6 +63,125 @@ jobs:
         run: echo "The Quality Gate status is ${{ steps.sonarqube-quality-gate-check.outputs.quality-gate-status }}"
 ```
 
+## Outputs
+
+This action provides two outputs that can be used in subsequent steps:
+
+### `quality-gate-status`
+The overall status of the Quality Gate. Possible values:
+- `PASSED` - Quality Gate passed
+- `WARN` - Quality Gate passed with warnings
+- `FAILED` - Quality Gate failed
+
+### `quality-gate-summary`
+A detailed markdown-formatted summary of the Quality Gate results, including:
+- Quality Gate status
+- Count of new and accepted issues with links to SonarQube
+- Security hotspots count with link
+- Coverage percentage on new code with link
+- Duplication percentage on new code with link
+
+## Usage Examples
+
+### Basic usage with status check
+```yaml
+- name: SonarQube Quality Gate check
+  id: sonarqube-quality-gate-check
+  uses: sonarsource/sonarqube-quality-gate-action@master
+  # ... configuration ...
+
+- name: "Check Quality Gate Status"
+  run: |
+    echo "Quality Gate status: ${{ steps.sonarqube-quality-gate-check.outputs.quality-gate-status }}"
+    if [[ "${{ steps.sonarqube-quality-gate-check.outputs.quality-gate-status }}" != "PASSED" ]]; then
+      echo "Quality Gate failed!"
+      exit 1
+    fi
+```
+
+### Using the summary in Slack notifications
+```yaml
+- name: SonarQube Quality Gate check
+  id: sonarqube-quality-gate-check
+  uses: sonarsource/sonarqube-quality-gate-action@master
+  # ... configuration ...
+
+- name: Send Slack notification
+  uses: slackapi/slack-github-action@v1.26.0
+  with:
+    payload: |
+      {
+        "text": "🚀 CI/CD Pipeline Results",
+        "blocks": [
+          {
+            "type": "header",
+            "text": {
+              "type": "plain_text",
+              "text": "🚀 CI/CD Pipeline Results"
+            }
+          },
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "${{ steps.sonarqube-quality-gate-check.outputs.quality-gate-summary }}"
+            }
+          }
+        ]
+      }
+  env:
+    SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+```
+
+### Job-level outputs for use in other jobs
+```yaml
+jobs:
+  sonarqube-check:
+    runs-on: ubuntu-latest
+    outputs:
+      quality-gate-status: ${{ steps.sonarqube-quality-gate-check.outputs.quality-gate-status }}
+      quality-gate-summary: ${{ steps.sonarqube-quality-gate-check.outputs.quality-gate-summary }}
+    steps:
+      # ... other steps ...
+      - name: SonarQube Quality Gate check
+        id: sonarqube-quality-gate-check
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        # ... configuration ...
+  
+  deploy:
+    needs: sonarqube-check
+    if: needs.sonarqube-check.outputs.quality-gate-status == 'PASSED'
+    runs-on: ubuntu-latest
+    steps:
+      # ... deployment steps ...
+      
+  notify:
+    needs: [sonarqube-check, deploy]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send results to Slack
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "Pipeline completed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "${{ needs.sonarqube-check.outputs.quality-gate-summary }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+```
+
 Make sure to set up `pollingTimeoutSec` property in your step, to avoid wasting action minutes per month (see above example). If not provided, the default value of 300s is applied.
 
 When using this action with [sonarsource/sonarqube-scan](https://github.com/SonarSource/sonarqube-scan-action) action or with [C/C++ code analysis](https://docs.sonarsource.com/sonarqube-server/latest/analyzing-source-code/languages/c-family/overview/) (available only for SonarQube Server) you don't have to provide `scanMetadataReportFile` input, otherwise you should alter the location of it.
