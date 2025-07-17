@@ -200,7 +200,7 @@ generate_quality_gate_summary() {
   summary="${summary} [${duplication_value}% Duplication on New Code](${serverUrl}/component_measures?${url_params}&metric=new_duplicated_lines_density&view=list)"
   
   # Output summary to GitHub Actions output
-  set_output "quality_gate_summary" "$summary"
+  set_output "quality-gate-summary" "$summary"
   
   # Also echo summary to stdout for console output
   echo ""
