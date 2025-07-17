@@ -328,24 +328,22 @@ teardown() {
   run script/check-quality-gate.sh metadata_tmp 300
 
   # Check both quality-gate-status and quality_gate_summary outputs
-  local github_outputs=()
-  while IFS= read -r line; do
-    github_outputs+=("$line")
-  done < ${GITHUB_OUTPUT}
+  local github_output_content
+  github_output_content=$(cat ${GITHUB_OUTPUT})
 
   [ "$status" -eq 0 ]
   
   # Check quality-gate-status output
-  [[ "${github_outputs[0]}" = "quality-gate-status=PASSED" ]]
+  [[ "$github_output_content" = *"quality-gate-status=PASSED"* ]]
   
-  # Check quality_gate_summary output exists
-  [[ "${github_outputs[1]}" = quality_gate_summary=* ]]
-  [[ "${github_outputs[1]}" = *"Quality Gate Passed"* ]]
-  [[ "${github_outputs[1]}" = *"[3 New issues]"* ]]
-  [[ "${github_outputs[1]}" = *"[1 Accepted issues]"* ]]
-  [[ "${github_outputs[1]}" = *"[2 Security Hotspots]"* ]]
-  [[ "${github_outputs[1]}" = *"[85.5% Coverage on New Code]"* ]]
-  [[ "${github_outputs[1]}" = *"[1.2% Duplication on New Code]"* ]]
+  # Check quality-gate-summary output exists (multiline format)
+  [[ "$github_output_content" = *"quality-gate-summary<<"* ]]
+  [[ "$github_output_content" = *"Quality Gate Passed"* ]]
+  [[ "$github_output_content" = *"[3 New issues]"* ]]
+  [[ "$github_output_content" = *"[1 Accepted issues]"* ]]
+  [[ "$github_output_content" = *"[2 Security Hotspots]"* ]]
+  [[ "$github_output_content" = *"[85.5% Coverage on New Code]"* ]]
+  [[ "$github_output_content" = *"[1.2% Duplication on New Code]"* ]]
   
   # Check console output
   [[ "$output" = *"Quality Gate has PASSED."* ]]
