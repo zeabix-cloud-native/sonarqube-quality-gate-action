@@ -189,39 +189,21 @@ generate_quality_gate_summary() {
   
   # Generate summary content with actual newlines
   local summary=""
-  summary="${summary}${status_text}
-"
-  summary="${summary}Issues
-"
-  summary="${summary} [${new_issues_count} New issues](${serverUrl}/project/issues?${url_params}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true)
-"
-  summary="${summary} [${accepted_issues_count} Accepted issues](${serverUrl}/project/issues?${url_params}&issueStatuses=ACCEPTED)
-"
-  summary="${summary}
-"
-  summary="${summary}Measures
-"
-  summary="${summary} [${security_hotspots_count} Security Hotspots](${serverUrl}/project/security_hotspots?${url_params}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true)
-"
-  summary="${summary} [${coverage_value}% Coverage on New Code](${serverUrl}/component_measures?${url_params}&metric=new_coverage&view=list)
-"
+  summary="${summary}${status_text}\n"
+  summary="${summary}Issues\n"
+  summary="${summary} [${new_issues_count} New issues](${serverUrl}/project/issues?${url_params}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true)\n"
+  summary="${summary} [${accepted_issues_count} Accepted issues](${serverUrl}/project/issues?${url_params}&issueStatuses=ACCEPTED)\n"
+  summary="${summary}\n"
+  summary="${summary}Measures\n"
+  summary="${summary} [${security_hotspots_count} Security Hotspots](${serverUrl}/project/security_hotspots?${url_params}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true)\n"
+  summary="${summary} [${coverage_value}% Coverage on New Code](${serverUrl}/component_measures?${url_params}&metric=new_coverage&view=list)\n"
   summary="${summary} [${duplication_value}% Duplication on New Code](${serverUrl}/component_measures?${url_params}&metric=new_duplicated_lines_density&view=list)"
-  
   # Output summary to GitHub Actions output
   set_multiline_output "quality-gate-summary" "$summary"
 
   # Also echo summary to stdout for console output
-  # echo ""
   echo "$summary"
-  # echo "$status_text"
-  # echo "Issues"
-  # echo " [${new_issues_count} New issues](${serverUrl}/project/issues?${url_params}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true)"
-  # echo " [${accepted_issues_count} Accepted issues](${serverUrl}/project/issues?${url_params}&issueStatuses=ACCEPTED)"
-  # echo ""
-  # echo "Measures"
-  # echo " [${security_hotspots_count} Security Hotspots](${serverUrl}/project/security_hotspots?${url_params}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true)"
-  # echo " [${coverage_value}% Coverage on New Code](${serverUrl}/component_measures?${url_params}&metric=new_coverage&view=list)"
-  # echo " [${duplication_value}% Duplication on New Code](${serverUrl}/component_measures?${url_params}&metric=new_duplicated_lines_density&view=list)"
+  
 }
 
 if [[ ${qualityGateStatus} == "OK" ]]; then
