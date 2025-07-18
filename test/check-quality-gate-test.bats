@@ -355,3 +355,99 @@ teardown() {
   [[ "$output" = *"[1.2% Duplication on New Code]"* ]]
   [[ "$output" = *"pullRequest=42"* ]]
 }
+
+@test "use slack format when SLACK_FORMAT is true" {
+  export SONAR_TOKEN="test"
+  export SLACK_FORMAT="true"
+  echo "serverUrl=http://localhost:9000" >> metadata_tmp
+  echo "ceTaskUrl=http://localhost:9000/api/ce/task?id=AXlCe3gsFwOUsY8YKHTn" >> metadata_tmp
+  echo "dashboardUrl=http://localhost:9000/dashboard?id=project&branch=master" >> metadata_tmp
+
+  #mock curl for different API calls
+  function curl() {
+    url="${@: -1}"
+    if [[ $url == *"/api/qualitygates/project_status?analysisId"* ]]; then
+      echo '{"projectStatus":{"status":"OK"}}'
+    elif [[ $url == *"/api/issues/search"* ]]; then
+      if [[ $url == *"sinceLeakPeriod=true"* ]]; then
+        echo '{"total":3}'
+      else
+        echo '{"total":1}'
+      fi
+    elif [[ $url == *"/api/hotspots/search"* ]]; then
+      echo '{"paging":{"total":2}}'
+    elif [[ $url == *"/api/measures/component"* ]]; then
+      if [[ $url == *"new_coverage"* ]]; then
+        echo '{"component":{"measures":[{"value":"85.5"}]}}'
+      else
+        echo '{"component":{"measures":[{"value":"1.2"}]}}'
+      fi
+    else
+      echo '{"task":{"analysisId":"AXlCe3jz9LkwR9Gs0pBY","status":"SUCCESS"}}'
+    fi
+  }
+  export -f curl
+
+  run script/check-quality-gate.sh metadata_tmp 300
+
+  [ "$status" -eq 0 ]
+  # Check that Slack format is used (with <url|text> syntax and *bold* headers)
+  [[ "$output" = *"Quality Gate Passed"* ]]
+  [[ "$output" = *"*Issues*"* ]]
+  [[ "$output" = *"*Measures*"* ]]
+  [[ "$output" = *"<http://localhost:9000/project/issues"*"|3 New issues>"* ]]
+  [[ "$output" = *"<http://localhost:9000/project/issues"*"|1 Accepted issues>"* ]]
+  [[ "$output" = *"<http://localhost:9000/project/security_hotspots"*"|2 Security Hotspots>"* ]]
+  [[ "$output" = *"<http://localhost:9000/component_measures"*"|85.5% Coverage on New Code>"* ]]
+  [[ "$output" = *"<http://localhost:9000/component_measures"*"|1.2% Duplication on New Code>"* ]]
+}
+
+@test "use markdown format when SLACK_FORMAT is false or unset" {
+  export SONAR_TOKEN="test"
+  # SLACK_FORMAT not set, should default to markdown
+  echo "serverUrl=http://localhost:9000" >> metadata_tmp
+  echo "ceTaskUrl=http://localhost:9000/api/ce/task?id=AXlCe3gsFwOUsY8YKHTn" >> metadata_tmp
+  echo "dashboardUrl=http://localhost:9000/dashboard?id=project&branch=master" >> metadata_tmp
+
+  #mock curl for different API calls
+  function curl() {
+    url="${@: -1}"
+    if [[ $url == *"/api/qualitygates/project_status?analysisId"* ]]; then
+      echo '{"projectStatus":{"status":"OK"}}'
+    elif [[ $url == *"/api/issues/search"* ]]; then
+      if [[ $url == *"sinceLeakPeriod=true"* ]]; then
+        echo '{"total":3}'
+      else
+        echo '{"total":1}'
+      fi
+    elif [[ $url == *"/api/hotspots/search"* ]]; then
+      echo '{"paging":{"total":2}}'
+    elif [[ $url == *"/api/measures/component"* ]]; then
+      if [[ $url == *"new_coverage"* ]]; then
+        echo '{"component":{"measures":[{"value":"85.5"}]}}'
+      else
+        echo '{"component":{"measures":[{"value":"1.2"}]}}'
+      fi
+    else
+      echo '{"task":{"analysisId":"AXlCe3jz9LkwR9Gs0pBY","status":"SUCCESS"}}'
+    fi
+  }
+  export -f curl
+
+  run script/check-quality-gate.sh metadata_tmp 300
+
+  [ "$status" -eq 0 ]
+  # Check that markdown format is used (with [text](url) syntax and regular headers)
+  [[ "$output" = *"Quality Gate Passed"* ]]
+  [[ "$output" = *"Issues"* ]]
+  [[ "$output" = *"Measures"* ]]
+  [[ "$output" = *"[3 New issues](http://localhost:9000/project/issues"* ]]
+  [[ "$output" = *"[1 Accepted issues](http://localhost:9000/project/issues"* ]]
+  [[ "$output" = *"[2 Security Hotspots](http://localhost:9000/project/security_hotspots"* ]]
+  [[ "$output" = *"[85.5% Coverage on New Code](http://localhost:9000/component_measures"* ]]
+  [[ "$output" = *"[1.2% Duplication on New Code](http://localhost:9000/component_measures"* ]]
+  # Ensure it's NOT using Slack format
+  [[ "$output" != *"*Issues*"* ]]
+  [[ "$output" != *"*Measures*"* ]]
+  [[ "$output" != *"<http"*"|"*">"* ]]
+}

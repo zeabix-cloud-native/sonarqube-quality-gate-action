@@ -99,6 +99,38 @@ A detailed markdown-formatted summary of the Quality Gate results, including:
     fi
 ```
 
+### Slack integration with quality gate summary
+```yaml
+- name: SonarQube Quality Gate check
+  id: sonarqube-quality-gate-check
+  uses: sonarsource/sonarqube-quality-gate-action@master
+  env:
+    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+    SLACK_FORMAT: true  # Enable Slack-friendly formatting
+
+- name: Post to Slack
+  if: always()  # Post regardless of quality gate result
+  uses: 8398a7/action-slack@v3
+  with:
+    status: custom
+    custom_payload: |
+      {
+        text: "SonarQube Quality Gate Results",
+        blocks: [
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: "${{ steps.sonarqube-quality-gate-check.outputs.quality-gate-summary }}"
+            }
+          }
+        ]
+      }
+  env:
+    SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+```
+
 ### Using the summary in Slack notifications
 ```yaml
 - name: SonarQube Quality Gate check
@@ -208,6 +240,8 @@ Example usage:
 - `SONAR_HOST_URL` – **Optional** this tells the scanner where SonarQube is hosted, otherwise it will get the one from the scan report. You can set the `SONAR_HOST_URL` environment variable in the "Secrets" settings page of your repository, or you can add them at the level of your GitHub organization (recommended).
 
 - `SONAR_ROOT_CERT` – Holds an additional root certificate (in PEM format) that is used to validate the SonarQube certificate. You can set the `SONAR_ROOT_CERT` environment variable in the "Secrets" settings page of your repository, or you can add them at the level of your GitHub organization (recommended).
+
+- `SLACK_FORMAT` – **Optional** set to `true` to format the quality gate summary output in Slack-friendly format using `<url|text>` syntax instead of standard markdown links. This is useful when posting the summary to Slack channels.
 
 ## Quality Gate check run
 

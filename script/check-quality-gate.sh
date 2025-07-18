@@ -189,15 +189,31 @@ generate_quality_gate_summary() {
   
   # Generate summary content with actual newlines
   local summary=""
-  summary="${summary}${status_text}\n"
-  summary="${summary}Issues\n"
-  summary="${summary} [${new_issues_count} New issues](${serverUrl}/project/issues?${url_params}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true)\n"
-  summary="${summary} [${accepted_issues_count} Accepted issues](${serverUrl}/project/issues?${url_params}&issueStatuses=ACCEPTED)\n"
-  summary="${summary}\n"
-  summary="${summary}Measures\n"
-  summary="${summary} [${security_hotspots_count} Security Hotspots](${serverUrl}/project/security_hotspots?${url_params}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true)\n"
-  summary="${summary} [${coverage_value}% Coverage on New Code](${serverUrl}/component_measures?${url_params}&metric=new_coverage&view=list)\n"
-  summary="${summary} [${duplication_value}% Duplication on New Code](${serverUrl}/component_measures?${url_params}&metric=new_duplicated_lines_density&view=list)"
+  
+  # Check if Slack format is requested
+  if [[ "${SLACK_FORMAT}" == "true" ]]; then
+    # Slack format using <url|text> syntax
+    summary="${summary}${status_text}\n"
+    summary="${summary}*Issues*\n"
+    summary="${summary}• <${serverUrl}/project/issues?${url_params}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true|${new_issues_count} New issues>\n"
+    summary="${summary}• <${serverUrl}/project/issues?${url_params}&issueStatuses=ACCEPTED|${accepted_issues_count} Accepted issues>\n"
+    summary="${summary}\n"
+    summary="${summary}*Measures*\n"
+    summary="${summary}• <${serverUrl}/project/security_hotspots?${url_params}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true|${security_hotspots_count} Security Hotspots>\n"
+    summary="${summary}• <${serverUrl}/component_measures?${url_params}&metric=new_coverage&view=list|${coverage_value}% Coverage on New Code>\n"
+    summary="${summary}• <${serverUrl}/component_measures?${url_params}&metric=new_duplicated_lines_density&view=list|${duplication_value}% Duplication on New Code>"
+  else
+    # Standard markdown format
+    summary="${summary}${status_text}\n"
+    summary="${summary}Issues\n"
+    summary="${summary} [${new_issues_count} New issues](${serverUrl}/project/issues?${url_params}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true)\n"
+    summary="${summary} [${accepted_issues_count} Accepted issues](${serverUrl}/project/issues?${url_params}&issueStatuses=ACCEPTED)\n"
+    summary="${summary}\n"
+    summary="${summary}Measures\n"
+    summary="${summary} [${security_hotspots_count} Security Hotspots](${serverUrl}/project/security_hotspots?${url_params}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true)\n"
+    summary="${summary} [${coverage_value}% Coverage on New Code](${serverUrl}/component_measures?${url_params}&metric=new_coverage&view=list)\n"
+    summary="${summary} [${duplication_value}% Duplication on New Code](${serverUrl}/component_measures?${url_params}&metric=new_duplicated_lines_density&view=list)"
+  fi
   # Output summary to GitHub Actions output
   set_multiline_output "quality-gate-summary" "$summary"
 
