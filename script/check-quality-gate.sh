@@ -193,7 +193,7 @@ generate_quality_gate_summary() {
   # Check if Slack format is requested
   if [[ "${SLACK_FORMAT}" == "true" ]]; then
     # Slack format using <url|text> syntax
-    summary="${summary}${status_text}\n"
+    summary="*${summary}${status_text}*\n"
     summary="${summary}*Issues*\n"
     summary="${summary}• <${serverUrl}/project/issues?${url_params}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true|${new_issues_count} New issues>\n"
     summary="${summary}• <${serverUrl}/project/issues?${url_params}&issueStatuses=ACCEPTED|${accepted_issues_count} Accepted issues>\n"
@@ -204,7 +204,7 @@ generate_quality_gate_summary() {
     summary="${summary}• <${serverUrl}/component_measures?${url_params}&metric=new_duplicated_lines_density&view=list|${duplication_value}% Duplication on New Code>"
   else
     # Standard markdown format
-    summary="*${summary}${status_text}*\n"
+    summary="${summary}${status_text}\n"
     summary="${summary}Issues\n"
     summary="${summary} [${new_issues_count} New issues](${serverUrl}/project/issues?${url_params}&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true)\n"
     summary="${summary} [${accepted_issues_count} Accepted issues](${serverUrl}/project/issues?${url_params}&issueStatuses=ACCEPTED)\n"
